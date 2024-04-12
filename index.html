@@ -3,29 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Disease/Object Detection</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Image Upload</title>
 </head>
 <body>
-    <header>
-        <h1>Disease/Object Detection</h1>
-    </header>
-    <main>
-        <section class="upload-section">
-            <h2>Upload an Image</h2>
-            <input type="file" id="image-upload" accept="image/*">
-            <button id="detect-button">Detect</button>
-        </section>
-        <section class="result-section" style="display: none;">
-            <h2>Results</h2>
-            <div id="result-container">
-                <!-- Results will be displayed here -->
-            </div>
-        </section>
-    </main>
-    <footer>
-        <p>© 2024 Disease/Object Detection</p>
-    </footer>
-    <script src="script.js"></script>
+    <h1>Upload Image</h1>
+    <input type="file" id="fileInput">
+    <button onclick="uploadImage()">Upload</button>
+
+    <script>
+        async function uploadImage() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select an image file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64Image = e.target.result.split(',')[1];
+                try {
+                    console.log(base64Image);
+                    await sendDataToBackend(base64Image);
+                    alert('Image uploaded successfully!');
+                } catch (error) {
+                    console.error('Error uploading image:', error);
+                    alert('Failed to upload image. Please try again.');
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function sendDataToBackend(base64Image) {
+            const url = 'http://localhost:8080'; // Change the URL to your backend endpoint
+
+            const formData = new FormData();
+            formData.append('image', base64Image);
+
+            const requestOptions = {
+                method: 'POST',
+                body: formData
+            };
+
+            const response = await fetch(url, requestOptions);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+        }
+    </script>
 </body>
 </html>
