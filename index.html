@@ -45,8 +45,10 @@
                 method: 'POST',
                 body: formData
             };
-
+            
             const response = await fetch(url, requestOptions);
+            const responseData = await response.text(); 
+            alert(responseData)
 
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
