@@ -80,26 +80,32 @@ std::vector<Ort::Value> inference(const std::string& image_path, Ort::Session& s
 }
 
 
-int main() {
+int inferenceMain() {
+
     Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "test");
     Ort::SessionOptions session_options;
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
-    auto model_path = L"D:/Documents/coding/cpp/onnxrun/onnxrun/model.onnx";
-    Ort::Session session(env, model_path, session_options);
+    auto model_path = L"D:\\repos\\Project2\\HSC-Cpp-project-\\model.onnx";
 
-    std::string image_path = "D:/Documents/coding/cpp/onnxrun/onnxrun/test_pos.jpg";
+    try
+    {
+        Ort::Session session(env, model_path, session_options);
+        std::string image_path = "D:\\repos\\Project2\\output.jpg";
+        std::cout << "Starting inference..." << std::endl;
+        auto outputs = inference(image_path, session);
+        std::vector<float> probabilities;
+        probabilities.reserve(outputs[0].GetTensorTypeAndShapeInfo().GetElementCount());
+        auto output_data = outputs[0].GetTensorMutableData<float>();
+        for (size_t i = 0; i < outputs[0].GetTensorTypeAndShapeInfo().GetElementCount(); ++i) {
+            probabilities.push_back(std::exp(output_data[i]) / std::accumulate(output_data, output_data + outputs[0].GetTensorTypeAndShapeInfo().GetElementCount(), 0.0));
+        }
 
-    std::cout << "Starting inference..." << std::endl;
-    auto outputs = inference(image_path, session);
-
-    std::vector<float> probabilities;
-    probabilities.reserve(outputs[0].GetTensorTypeAndShapeInfo().GetElementCount());
-    auto output_data = outputs[0].GetTensorMutableData<float>();
-    for (size_t i = 0; i < outputs[0].GetTensorTypeAndShapeInfo().GetElementCount(); ++i) {
-        probabilities.push_back(std::exp(output_data[i]) / std::accumulate(output_data, output_data + outputs[0].GetTensorTypeAndShapeInfo().GetElementCount(), 0.0));
+        int predicted_class = std::distance(probabilities.begin(), std::max_element(probabilities.begin(), probabilities.end()));
+        std::cout << "Predicted class: " << predicted_class << std::endl;
+        return predicted_class;
     }
-    int predicted_class = std::distance(probabilities.begin(), std::max_element(probabilities.begin(), probabilities.end()));
-    std::cout << "Predicted class: " << predicted_class << std::endl;
-
+    catch (const std::exception& e) {
+        std::cout << "EXCEPTION:  " << e.what() << std::endl;
+    }
     return 0;
 }

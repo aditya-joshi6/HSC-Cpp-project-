@@ -7,7 +7,7 @@
 #include <iomanip>
 #include <string>
 #include <boost/algorithm/string.hpp>
-#include "b64Decoder.cpp"
+#include "b64Decoder.h"
 
 namespace http = boost::beast::http;
 using tcp = boost::asio::ip::tcp;
@@ -42,19 +42,22 @@ void handleFileUpload(tcp::socket& socket) {
         boost::beast::http::string_body::value_type requestBody = request.body();
 
         // Save the request body to a text file
-        std::ofstream outputFile1("request_body.txt",'wb');
+        std::ofstream outputFile1("request_body.txt", 'wb');
         outputFile1 << requestBody;
         outputFile1.close();
 
         std::vector<std::string> parts;
-        boost::algorithm::split(parts, requestBody, boost::algorithm::is_any_of("--" + boundary));
-        for (auto i: parts) std::cout << i << std::endl;
+        boost::algorithm::split(parts, requestBody, boost::algorithm::is_any_of("\n")); // split with "\n" as delimeter
+        std:: cout<< parts[3] << std:: endl; //  request body
+        int res = b64decoderMain(parts[3]); // calling decode function
+
         // Find the part containing the file data
         try {
             http::response<http::string_body> response{ http::status::ok, request.version() };
             response.set(http::field::server, "Boost Beast File Upload Server");
             response.set(http::field::access_control_allow_origin, "*"); // Allow all origins
-            response.body() = "File uploaded successfully";
+            //response.body() = "File uploaded successfully";
+            response.body() = "Predicted Class: " + std::to_string(res);
             response.prepare_payload();
             boost::beast::http::write(socket, response);
             return;
@@ -68,6 +71,7 @@ void handleFileUpload(tcp::socket& socket) {
             badRequestResponse.prepare_payload();
             boost::beast::http::write(socket, badRequestResponse);
         }
+        
     }
 
     catch (const std::exception& e) {
@@ -77,19 +81,29 @@ void handleFileUpload(tcp::socket& socket) {
         badRequestResponse.set(http::field::access_control_allow_origin, "*"); // Allow all origins
         badRequestResponse.body() = "Invalid request for file upload";
         badRequestResponse.prepare_payload();
-        boost::beast::http::write(socket, badRequestResponse);
+        try {
+            boost::beast::http::write(socket, badRequestResponse);
+        }
+        catch (const std::exception& e) {
+            std::cout << "EXCEPTION:  " << e.what() << std::endl;
+        }
     }
 }
 
 int main() {
     boost::asio::io_context ioContext;
     std::cout << "Server listening at port 8080" << std::endl;
-	tcp::acceptor acceptor{ ioContext, { tcp::v4(), 8080 } };
-	tcp::socket socket{ ioContext };
+    tcp::acceptor acceptor{ ioContext, { tcp::v4(), 8080 } };
+    tcp::socket socket{ ioContext };
 
     while (true) {
-		acceptor.accept(socket);
-		handleFileUpload(socket);
-	}
-	return 0;
+        try {
+            acceptor.accept(socket);
+        }
+        catch (const std::exception& e) {
+            std::cout << "EXCEPTION:  " << e.what() << std::endl;
+        }
+        handleFileUpload(socket);
+    }
+    return 0;
 }
