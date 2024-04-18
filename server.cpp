@@ -7,8 +7,11 @@
 #include <iomanip>
 #include <string>
 #include <boost/algorithm/string.hpp>
+#include <thread>
+#include <mutex>
 #include "b64Decoder.h"
 
+std::mutex mtx; // Global mutex
 namespace http = boost::beast::http;
 using tcp = boost::asio::ip::tcp;
 
@@ -34,23 +37,29 @@ void handleFileUpload(tcp::socket& socket) {
 
         // Log the extracted boundary
         std::cout << "Boundary: " << boundary << "\n";
+        // Lock MUTEx
+        mtx.lock();
         std::ofstream outputFile("request.txt");
         outputFile << request;
         outputFile.close();
+        mtx.unlock(); // Unlock the mutex after writing to the file
+
 
         // Parse the multipart/form-data body to extract the file data
         boost::beast::http::string_body::value_type requestBody = request.body();
 
         // Save the request body to a text file
+        mtx.lock(); // Lock the mutex 
         std::ofstream outputFile1("request_body.txt", 'wb');
         outputFile1 << requestBody;
         outputFile1.close();
+        mtx.unlock(); // Unlock the mutex after writing to the file
+
 
         std::vector<std::string> parts;
         boost::algorithm::split(parts, requestBody, boost::algorithm::is_any_of("\n")); // split with "\n" as delimeter
-        std:: cout<< parts[3] << std:: endl; //  request body
-        int res = b64decoderMain(parts[3]); // calling decode function
-
+        std::cout << parts[3] << std::endl; //  request body
+        int res = b64decoderMain(parts[3]); //
         // Find the part containing the file data
         try {
             http::response<http::string_body> response{ http::status::ok, request.version() };
@@ -71,7 +80,7 @@ void handleFileUpload(tcp::socket& socket) {
             badRequestResponse.prepare_payload();
             boost::beast::http::write(socket, badRequestResponse);
         }
-        
+
     }
 
     catch (const std::exception& e) {
@@ -94,16 +103,16 @@ int main() {
     boost::asio::io_context ioContext;
     std::cout << "Server listening at port 8080" << std::endl;
     tcp::acceptor acceptor{ ioContext, { tcp::v4(), 8080 } };
-    tcp::socket socket{ ioContext };
-
     while (true) {
-        try {
-            acceptor.accept(socket);
-        }
-        catch (const std::exception& e) {
-            std::cout << "EXCEPTION:  " << e.what() << std::endl;
-        }
-        handleFileUpload(socket);
+        tcp::socket socket{ ioContext };
+        acceptor.accept(socket);
+
+        std::thread t([socket = std::move(socket)]() mutable {
+            handleFileUpload(socket);
+            });
+        std::cout << "New thread created to handle the connection." << std::endl;
+        t.detach();
     }
+
     return 0;
 }
