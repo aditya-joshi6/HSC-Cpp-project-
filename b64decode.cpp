@@ -8,7 +8,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include "D:\repos\Project2\inference.h"
+#include "inference.h"
 
 std::vector<unsigned char> base64_decode(std::string const&);
 using namespace std;
