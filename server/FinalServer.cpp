@@ -23,10 +23,6 @@
 std::mutex mtx;
 namespace http = boost::beast::http;
 using tcp = boost::asio::ip::tcp;
-// IPC
-using boost::interprocess::read_write;
-using boost::interprocess::open_or_create;
-using namespace boost::interprocess;
 
 
 void handleFileUpload(tcp::socket& socket) {
