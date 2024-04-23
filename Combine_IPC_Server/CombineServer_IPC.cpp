@@ -128,8 +128,7 @@ void handleTextRequest(http::request<http::string_body>& req) {
         offset_t size = shm_obj.get_size();
         std::cout << "Size of share memory: " << size << std::endl;
 
-        //Map the whole shared memory in this process
-        mapped_region region(shm_obj, read_write);
+        mapped_region region(shm_obj, read_write); //Map the whole shared memory in this process
 
         const char* message = decodedText.c_str();
         const size_t message_size = std::strlen(message);
@@ -143,7 +142,9 @@ void handleTextRequest(http::request<http::string_body>& req) {
             std::cout << "Message not written";
         }
 
-        system("python script.py");
+        std::string command = "python script.py " + decodedText;
+        system(command.c_str()); // invoking python script with decodedText
+        
         char* mem = static_cast<char*>(region.get_address());
         std::cout << "Data in shared memory written by Python script: " << mem << "\n";
     }
@@ -165,11 +166,19 @@ void handleTextConnection(tcp::socket& socket) {
 
     handleTextRequest(req);
 
+    // Reading result predicted by text model
+    std::string textResult;
+    std::ifstream resultFile("Result.txt");
+    while (getline(resultFile, textResult)) {
+        std::cout << textResult;
+    }
+    resultFile.close();
+
     http::response<http::string_body> res{ http::status::ok, req.version() };
 	res.set(http::field::server, "Simple-Cpp-Server");
 	res.set(http::field::content_type, "text/plain");
 	res.keep_alive(req.keep_alive());
-	res.body() = "Text received successfully";
+	res.body() = textResult;
 	res.prepare_payload();
 	res.set(http::field::access_control_allow_origin, "*"); // Allow all origins (for development only)
 	res.set(http::field::access_control_allow_methods, "GET, POST, OPTIONS");
