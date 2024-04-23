@@ -17,9 +17,8 @@
 #include <chrono>
 #include <thread>
 #include <mutex>
-#include "b64decoder.h"
+#include "D:\repos\inference\b64decoder.h"
 #include <cstring>
-#include "b64decodertext.h"
 
 // Mutex for thread safety
 std::mutex mtx;
@@ -30,7 +29,84 @@ using boost::interprocess::read_write;
 using boost::interprocess::open_or_create;
 using namespace boost::interprocess;
 
+// Base64 Alphabet char function
+int base_code(char chr) {
+    if (chr == '=') {
+        return NULL;
+    }
 
+    char alphabet[] = { 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/' };
+
+    int len = sizeof(alphabet) / sizeof(char);
+
+    for (int i = 0; i < len; i++) {
+        if (chr == alphabet[i]) {
+            return i;
+        }
+    }
+}
+
+std::string decode(std::string text) {
+    // Declaration
+    std::vector<int> bits;
+
+    // Get each character Base64 code and put it in bits vector
+    for (int i = 0; i < text.length(); i++) {
+        bits.push_back(base_code(text[i]));
+    }
+
+    // Turn Base64 code into binary
+    std::string binaryString;
+    for (int i = 0; i < bits.size(); i++) {
+        std::string revString;
+
+        // Calculate Binary
+        while (bits[i] > 0) {
+            int remain = bits[i] % 2;
+            revString += std::to_string(remain);
+            bits[i] /= 2;
+        }
+
+        // If Binary length is less than 6, put a 0 behind it
+        while (revString.length() < 6) {
+            revString += "0";
+        }
+
+        // Reverse the string so it would match before we divide it to a group of 8
+        for (int j = revString.length() - 1; j >= 0; j--) {
+            binaryString += revString[j];
+        }
+    }
+    // Clear bits vector so we could use it later
+    bits.clear();
+    // Divide the binary into a group with 8 elements
+    std::vector<std::string> binaryTemp;
+    while (binaryString.length() > 0) {
+        std::string temp = binaryString.substr(0, 8);
+        binaryTemp.push_back(temp);
+        binaryString.erase(0, 8);
+    }
+    // Convert from Binary to ASCII code
+    for (int i = 0; i < binaryTemp.size(); i++) {
+        int result = 0;
+        for (int j = binaryTemp[i].length() - 1; j >= 0; j--) {
+            if (binaryTemp[i].at(j) % 2 == 1) {
+                result += pow(2, binaryTemp[i].length() - 1 - j);
+            }
+        }
+        // Put the ASCII into the bits vector
+        bits.push_back(result);
+    }
+    // We convert the ASCII to char
+    std::string output;
+    for (int i = 0; i < bits.size(); i++) {
+        output += char(bits[i]);
+    }
+    // Return the output
+    return output;
+}
 void handleFileUpload(tcp::socket& socket) {
    boost::beast::flat_buffer buffer;
     http::request<http::string_body> request;
@@ -117,8 +193,9 @@ void handleFileUpload(tcp::socket& socket) {
 
 void handleTextRequest(http::request<http::string_body>& req) {
     std::string text = req.body();
-    if (text.length() != 0) {
-        std::string decodedText = decode(text);
+    std::string decodedText = decode(text);
+
+    if (decodedText.length() != 0) {
         std::cout << "Received text: " << decodedText << std::endl;
 
         // IPC Section
@@ -128,7 +205,8 @@ void handleTextRequest(http::request<http::string_body>& req) {
         offset_t size = shm_obj.get_size();
         std::cout << "Size of share memory: " << size << std::endl;
 
-        mapped_region region(shm_obj, read_write); //Map the whole shared memory in this process
+        //Map the whole shared memory in this process
+        mapped_region region(shm_obj, read_write);
 
         const char* message = decodedText.c_str();
         const size_t message_size = std::strlen(message);
@@ -142,9 +220,7 @@ void handleTextRequest(http::request<http::string_body>& req) {
             std::cout << "Message not written";
         }
 
-        std::string command = "python script.py " + decodedText;
-        system(command.c_str()); // invoking python script with decodedText
-        
+        system("python script.py");
         char* mem = static_cast<char*>(region.get_address());
         std::cout << "Data in shared memory written by Python script: " << mem << "\n";
     }
@@ -166,19 +242,11 @@ void handleTextConnection(tcp::socket& socket) {
 
     handleTextRequest(req);
 
-    // Reading result predicted by text model
-    std::string textResult;
-    std::ifstream resultFile("Result.txt");
-    while (getline(resultFile, textResult)) {
-        std::cout << textResult;
-    }
-    resultFile.close();
-
     http::response<http::string_body> res{ http::status::ok, req.version() };
 	res.set(http::field::server, "Simple-Cpp-Server");
 	res.set(http::field::content_type, "text/plain");
 	res.keep_alive(req.keep_alive());
-	res.body() = textResult;
+	res.body() = "Text received successfully";
 	res.prepare_payload();
 	res.set(http::field::access_control_allow_origin, "*"); // Allow all origins (for development only)
 	res.set(http::field::access_control_allow_methods, "GET, POST, OPTIONS");
