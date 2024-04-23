@@ -16,7 +16,7 @@
 #include <thread>
 #include <mutex>
 #include <cstring>
-#include "b64decoder.h"
+#include "b64ImageDecoder.h"
 #include "b64decodertext.h"
 
 // Mutex for thread safety
