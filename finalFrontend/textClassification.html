@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MultiModal ML </title>
+  <link rel="stylesheet" href="style.css" />
+  <nav>
+    <div class="menu">
+      <div class="logo">
+        <a href="index.html">MultiModal ML</a>
+      </div>
+      <ul>
+        <li><a href="imageClassification.html">Image Model</a></li>
+        <li><a href="textClassification.html">Text Model</a></li>
+        <li><a href='https://github.com/aditya-joshi6/HSC-Cpp-project-' target="_blank">Github Repo</a></li>
+        <li><a href='https://docs.google.com/document/d/11IfzTYY9qXkeqEVm6JztnoJR0v8Yo_eV43n_BixCu-I/edit?usp=drivesdk' target="_blank">Documentation</a></li>
+      </ul>
+    </div>
+  </nav>
+</head>
+<body>
+<div class="img"></div>
+<div class="center">
+  <div>
+    <h1>Text Sentiment detection using OpenAI</h1>
+    <form id="textForm">
+      <textarea id="textInput" rows="4" cols="50" maxlength="70"></textarea><br>
+      <button type="button" onclick="sendText()" class="button-10">Submit</button>
+    </form>
+    <div id="resultsSection" class="results-section"></div>
+  </div>
+</div>
+
+<script src="textScript.js"></script>
+</body>
+</html>
+
