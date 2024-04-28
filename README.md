@@ -19,7 +19,7 @@
     <ul> Libraries
       <li>Boost 1.84</li>
       <li>ONNXRuntime</li>
-      <li>OpenCv 4.2 </li>l
+      <li>OpenCv 4.2 </li>
     </ul>
   </li>  
   <li> <h3> ML Modelling : Python </h3>
@@ -31,3 +31,5 @@
     <li> Tf2Onnx</li>
   </ul>
 </ul>
+<h2>Team Members:</h2>
+<h3>Aditya Joshi, Shivani Singh, Karan Gupta</h3>
