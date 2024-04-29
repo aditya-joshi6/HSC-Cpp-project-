@@ -32,9 +32,9 @@
   </ul>
 </ul>
 <h2> Running the project </h2>
-Inorder to run this project please follow the below enlisted steps 
-1) Install visual studio 2022
-2) Install Boost 1.84
+Inorder to run this project please follow the below enlisted steps<br> 
+1) Install visual studio 2022<br>
+2) Install Boost 1.84<br>
 3) Install ONNXRuntime and OpenCV4.2 using Nuget in VS22<br>
 4) Import all files in the server folder to the project<br>
 5) Update path of model and file storage area in inference file<br> 
