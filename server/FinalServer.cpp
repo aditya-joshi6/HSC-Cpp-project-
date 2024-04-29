@@ -1,3 +1,5 @@
+#define _WIN32_WINNT 0x0A00
+
 #include <cstdlib>
 #include <boost/beast.hpp>
 #include <boost/beast/http.hpp>
@@ -14,6 +16,8 @@
 #include <cstring>
 #include "b64ImageDecoder.h"
 #include "b64decodertext.h"
+
+
 
 // Mutex for thread safety
 std::mutex mtx;
@@ -64,7 +68,7 @@ void handleFileUpload(tcp::socket& socket) {
 
         std::vector<std::string> parts;
         boost::algorithm::split(parts, requestBody, boost::algorithm::is_any_of("\n")); // split with "\n" as delimeter
-        std::cout << parts[3] << std::endl; //  request body
+        //std::cout << parts[3] << std::endl; //  request body
         int res = b64decoderMain(parts[3]); //
         // Find the part containing the file data
         try {
@@ -72,7 +76,9 @@ void handleFileUpload(tcp::socket& socket) {
             response.set(http::field::server, "Boost Beast File Upload Server");
             response.set(http::field::access_control_allow_origin, "*"); // Allow all origins
             //response.body() = "File uploaded successfully";
-            response.body() = "Predicted Class: " + std::to_string(res);
+            std::string predictedClass = "Lumpy Skin Diseases detected";
+            if (res == 1) { predictedClass = "Lumpy Skin Disease not detected"; }
+            response.body() =  predictedClass;
             response.prepare_payload();
             boost::beast::http::write(socket, response);
             return;
@@ -81,7 +87,7 @@ void handleFileUpload(tcp::socket& socket) {
             std::cerr << "Empty file: " << e.what() << "\n";
             http::response<http::string_body> badRequestResponse{ http::status::bad_request, request.version() };
             badRequestResponse.set(http::field::server, "Boost Beast File Upload Server");
-            badRequestResponse.set(http::field::access_control_allow_origin, "*"); // Allow all origins
+            badRequestResponse.set(http::field::access_control_allow_origin, "*"); // Allow all origins NOT RECOMENDED FOR PRODUCTION
             badRequestResponse.body() = "Invalid request for file upload";
             badRequestResponse.prepare_payload();
             boost::beast::http::write(socket, badRequestResponse);
@@ -93,7 +99,7 @@ void handleFileUpload(tcp::socket& socket) {
         std::cerr << "Error reading HTTP request: " << e.what() << "\n";
         http::response<http::string_body> badRequestResponse{ http::status::bad_request, request.version() };
         badRequestResponse.set(http::field::server, "Boost Beast File Upload Server");
-        badRequestResponse.set(http::field::access_control_allow_origin, "*"); // Allow all origins
+        badRequestResponse.set(http::field::access_control_allow_origin, "*"); // Allow all origins NOT RECOMENDED FOR PRODUCTION
         badRequestResponse.body() = "Invalid request for file upload";
         badRequestResponse.prepare_payload();
         try {
@@ -110,7 +116,9 @@ void handleTextRequest(http::request<http::string_body>& req) {
     if (text.length() != 0) {
         std::string decodedText = decode(text);
         std::cout << "Received text: " << decodedText << std::endl;
-	std::string command = "python script.py " + decodedText;
+        std::string pythonScriptLocation = "C:/Users/Work/Desktop/cppCode/project/test_script.py";
+        std::string command = "python " + pythonScriptLocation +" \"" + decodedText + "\"";
+        std::cout << command << std::endl;
         system(command.c_str()); // invoking python script with decodedText
     }
 }
@@ -127,17 +135,20 @@ void handleTextConnection(tcp::socket& socket) {
         std::cerr << "Error reading request: " << ec.message() << std::endl;
         return;
     }
+    const char* pythonCommunicationFile = "C:\\Users\\Work\\Desktop\\cppCode\\project\\Result.txt"; 
+
+    if (remove(pythonCommunicationFile) == 0) {
+        printf("File deleted.\n");
+    }
 
     handleTextRequest(req);
 
     // Reading result predicted by text model
     std::string textResult;
-    std::ifstream resultFile("Result.txt");
-    while (getline(resultFile, textResult)) {
-        std::cout << textResult;
-    }
+    std::ifstream resultFile(pythonCommunicationFile);
+    getline(resultFile, textResult);
     resultFile.close();
-
+    
     http::response<http::string_body> res{ http::status::ok, req.version() };
 	res.set(http::field::server, "Simple-Cpp-Server");
 	res.set(http::field::content_type, "text/plain");
@@ -153,9 +164,9 @@ void handleTextConnection(tcp::socket& socket) {
 int main() {
     try {
         boost::asio::io_context ioContext;
-
+        int text_port = 8081, image_port = 8080;
         // Start image server on port 8080
-        tcp::acceptor acceptor1(ioContext, tcp::endpoint(tcp::v4(), 8080));
+        tcp::acceptor acceptor1(ioContext, tcp::endpoint(tcp::v4(), image_port));
         std::thread imageServerThread([&]() {
             while (true) {
                 tcp::socket socket(ioContext);
@@ -165,17 +176,16 @@ int main() {
         });
 
         // Start text server on port 8081
-        tcp::acceptor acceptor2(ioContext, tcp::endpoint(tcp::v4(), 8081));
+        tcp::acceptor acceptor2(ioContext, tcp::endpoint(tcp::v4(), text_port));
         std::thread textServerThread([&]() {
             while (true) {
-                std::cout << "a\n";
                 tcp::socket socket(ioContext);
                 acceptor2.accept(socket);
                 handleTextConnection(socket);
             }
         });
 
-        std::cout << "Servers listening on ports: 8080, 8081" << std::endl;
+        std::cout << "Servers listening on ports:"<<image_port<<" "<<text_port << std::endl;
 
         imageServerThread.join();
         textServerThread.join();
