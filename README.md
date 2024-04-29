@@ -35,10 +35,10 @@
 Inorder to run this project please follow the below enlisted steps 
 1) Install visual studio 2022
 2) Install Boost 1.84
-3) Install ONNXRuntime and OpenCV4.2 using Nuget in VS22
-4) Import all files in the server folder to the project
-5) Update path of model and file storage area in inference file 
-6) Runserver using vs22 run project feature 
-7) Open the Frontend folder and run the code using live reload
+3) Install ONNXRuntime and OpenCV4.2 using Nuget in VS22<br>
+4) Import all files in the server folder to the project<br>
+5) Update path of model and file storage area in inference file<br> 
+6) Runserver using vs22 run project feature <br>
+7) Open the Frontend folder and run the code using live reload<br>
 <h2>Team Members:</h2>
 <h3>Aditya Joshi, Shivani Singh, Karan Gupta</h3>
