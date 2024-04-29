@@ -40,5 +40,7 @@ Inorder to run this project please follow the below enlisted steps<br>
 5) Update path of model and file storage area in inference file<br> 
 6) Runserver using vs22 run project feature <br>
 7) Open the Frontend folder and run the code using live reload<br>
+<h2>References</h2><br>
+<a href ="https://gist.github.com/tomykaira/f0fd86b6c73063283afe550bc5d77594">Base64 Decoding </a>
 <h2>Team Members:</h2>
 <h3>Aditya Joshi, Shivani Singh, Karan Gupta</h3>
