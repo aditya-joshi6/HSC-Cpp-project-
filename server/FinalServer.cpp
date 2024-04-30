@@ -1,4 +1,4 @@
-#define _WIN32_WINNT 0x0A00
+//#define _WIN32_WINNT 0x0A00
 
 #include <cstdlib>
 #include <boost/beast.hpp>
@@ -42,7 +42,7 @@ void handleFileUpload(tcp::socket& socket) {
         std::cout << "Content-Type: " << request["Content-Type"] << "\n";
 
         // Parse the Content-Type header to extract the boundary
-        std::string contentType = request["Content-Type"];
+        std::string contentType(request["Content-Type"].data(), request["Content-Type"].size());
         std::string boundary = contentType.substr(contentType.find("boundary=") + 9);
 
         // Log the extracted boundary
@@ -60,7 +60,7 @@ void handleFileUpload(tcp::socket& socket) {
 
         // Save the request body to a text file
         mtx.lock(); // Lock the mutex 
-        std::ofstream outputFile1("request_body.txt", 'wb');
+        std::ofstream outputFile1("request_body.txt", std::ios_base::binary);
         outputFile1 << requestBody;
         outputFile1.close();
         mtx.unlock(); // Unlock the mutex after writing to the file
@@ -69,7 +69,7 @@ void handleFileUpload(tcp::socket& socket) {
         std::vector<std::string> parts;
         boost::algorithm::split(parts, requestBody, boost::algorithm::is_any_of("\n")); // split with "\n" as delimeter
         //std::cout << parts[3] << std::endl; //  request body
-        int res = b64decoderMain(parts[3]); //
+        int res = b64decoderMain(parts[3]); 
         // Find the part containing the file data
         try {
             http::response<http::string_body> response{ http::status::ok, request.version() };
@@ -116,10 +116,11 @@ void handleTextRequest(http::request<http::string_body>& req) {
     if (text.length() != 0) {
         std::string decodedText = decode(text);
         std::cout << "Received text: " << decodedText << std::endl;
-        std::string pythonScriptLocation = "C:/Users/Work/Desktop/cppCode/project/test_script.py";
-        std::string command = "python " + pythonScriptLocation +" \"" + decodedText + "\"";
+        std::string pythonScriptLocation = "/home/shivani/HSC_C++Project/HSC-Cpp-project-/ML_modeling/script.py";
+        std::string command = "/usr/bin/python3 " + pythonScriptLocation +" \"" + decodedText + "\"";
         std::cout << command << std::endl;
         system(command.c_str()); // invoking python script with decodedText
+        std::cout<<"Inferencing done\n";
     }
 }
 

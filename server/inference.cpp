@@ -4,6 +4,7 @@
 #include <onnxruntime_cxx_api.h>
 #include <opencv2/opencv.hpp>
 
+std::string image_path = "/home/shivani/HSC_C++Project/HSC-Cpp-project-/server/output.jpg";
 // Preprocess the image
 cv::Mat preprocess_image(const std::string& image_path) {
     // Log the image path
@@ -14,7 +15,6 @@ cv::Mat preprocess_image(const std::string& image_path) {
 
     if (image.empty()) {
         std::cerr << "Error: Unable to load image: " << image_path << std::endl;
-        // Return an empty matrix
         return cv::Mat();
     }
 
@@ -65,11 +65,8 @@ std::vector<Ort::Value> inference(const std::string& image_path, Ort::Session& s
         std::vector<const char*> output_names = { "dense_2" };
 
         std::cout << "Running session..." << std::endl;
-        auto start_time = std::chrono::high_resolution_clock::now(); // Start timer
         auto outputs = session.Run(Ort::RunOptions{}, input_names.data(), ort_inputs.data(), input_names.size(), output_names.data(), output_names.size());
-        auto end_time = std::chrono::high_resolution_clock::now(); // End timer
-        std::cout << "Session run time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << " ms" << std::endl;
-
+       
         std::cout << "Inference completed." << std::endl;
         return outputs;
     }
@@ -85,12 +82,12 @@ int inferenceMain() {
     Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "test");
     Ort::SessionOptions session_options;
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
-    auto model_path = L"D:\\repos\\Project2\\HSC-Cpp-project-\\model.onnx";
-
-    try
-    {
-        Ort::Session session(env, model_path, session_options);
-        std::string image_path = "D:\\repos\\Project2\\output.jpg";
+    std::string model_path = "/home/shivani/HSC_C++Project/HSC-Cpp-project-/ML_modeling/image_model.onnx";
+    
+    try {
+        // Convert model_path to narrow character string
+        const char* narrow_model_path = model_path.c_str();
+        Ort::Session session(env, narrow_model_path, session_options);
         std::cout << "Starting inference..." << std::endl;
         auto outputs = inference(image_path, session);
         std::vector<float> probabilities;
