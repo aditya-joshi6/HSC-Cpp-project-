@@ -12,7 +12,7 @@ using namespace std;
 
 int base_code(char chr) {
     if (chr == '=') {
-        return NULL;
+        return 0;
     }
 
     char alphabet[] = { 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
@@ -26,9 +26,10 @@ int base_code(char chr) {
             return i;
         }
     }
+    return 0;
 }
 
-  string decode(  string text) {
+  string decode (string text) {
     
       vector<int> bits;
 

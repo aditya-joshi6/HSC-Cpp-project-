@@ -68,6 +68,7 @@ int b64decoderMain(string image)
 {
     using namespace std;
     string line = image;
+    
     cout << "GOT REQUEST STRING\n";
     std::vector<unsigned char> decodedData = base64_decode(line);
     std::ofstream myfile("output.jpg", ios::binary | ios::out);
