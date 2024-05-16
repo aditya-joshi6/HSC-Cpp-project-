@@ -1,4 +1,6 @@
-<h1>#</h1>
+## 🤝 Contributing
+
+### Clone the repo
 <h1>Multi-Model ML Toolkit</h1>
 
 <h2>Features :</h2> 
